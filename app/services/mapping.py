@@ -97,6 +97,8 @@ def map_extraction(payload: dict) -> dict:
     return {
         "mid": _text(payload.get("mid"), 100),
         "tid": _text(payload.get("tid"), 100),
+        "city": _text(payload.get("city"), 20),
+        "country": _text(payload.get("country"), 20),
         "txn_amount": _amount(payload.get("txn_amount")),
         "currency": _currency(payload.get("currency")),
         "txn_date": _txn_date(payload.get("txn_date")),
@@ -105,5 +107,8 @@ def map_extraction(payload: dict) -> dict:
         "card_last4": _card_last4(payload.get("card_last4")),
         "scheme": _text(payload.get("scheme"), 30),
         "outlet_address": _text(payload.get("outlet_address"), 250),
+        "merchant_name": _text(payload.get("merchant_name"), 100),
+        "location_id": _text(payload.get("location_id"), 50),
+        "effective_data": _txn_date(payload.get("effective_data")),
         "extraction_confidence": _confidence(payload.get("confidence")),
     }

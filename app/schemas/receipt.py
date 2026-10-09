@@ -25,6 +25,8 @@ class ReceiptEvidenceView(BaseModel):
     jira_ticket_id: str
     mid: str | None = None
     tid: str | None = None
+    city: str | None = None
+    country: str | None = None
     txn_amount: Decimal | None = None
     currency: str | None = None
     txn_date: datetime | None = None
@@ -33,6 +35,9 @@ class ReceiptEvidenceView(BaseModel):
     card_last4: str | None = None
     scheme: str | None = None
     outlet_address: str | None = None
+    merchant_name: str | None = None
+    location_id: str | None = None
+    effective_data: datetime | None = None
     evidence_file_url: str
     extraction_confidence: Decimal | None = None
     extracted_data: dict | None = None
@@ -42,5 +47,6 @@ class ReceiptEvidenceView(BaseModel):
     reviewed_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
+    decline_reason: str | None = None
 
     model_config = {"from_attributes": True}

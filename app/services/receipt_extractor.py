@@ -18,6 +18,8 @@ RECEIPT_JSON_SCHEMA = {
         "properties": {
             "mid": {**_NULLABLE_STRING, "description": "Merchant ID printed on the terminal slip"},
             "tid": {**_NULLABLE_STRING, "description": "Terminal ID"},
+            "city": {**_NULLABLE_STRING, "description": "City"},
+            "country": {**_NULLABLE_STRING, "description": "Country"},
             "txn_amount": {
                 **_NULLABLE_NUMBER,
                 "description": "Transaction amount as a number, without currency symbols",
@@ -29,11 +31,16 @@ RECEIPT_JSON_SCHEMA = {
             "card_last4": {**_NULLABLE_STRING, "description": "Last four digits of the card"},
             "scheme": {**_NULLABLE_STRING, "description": "Card scheme such as Visa or Mastercard"},
             "outlet_address": {**_NULLABLE_STRING, "description": "Outlet or merchant address printed on the slip"},
+            "merchant_name": {**_NULLABLE_STRING, "description": "Name of the merchant"},
+            "location_id": {**_NULLABLE_STRING, "description": "Location ID if printed on the slip"},
+            "effective_data": {**_NULLABLE_STRING, "description": "Effective date/time of the transaction in ISO-8601"},
             "confidence": {"type": "number", "description": "Overall extraction confidence from 0 to 1"},
         },
         "required": [
             "mid",
             "tid",
+            "city",
+            "country",
             "txn_amount",
             "currency",
             "txn_date",
@@ -42,6 +49,9 @@ RECEIPT_JSON_SCHEMA = {
             "card_last4",
             "scheme",
             "outlet_address",
+            "merchant_name",
+            "location_id",
+            "effective_data",
             "confidence",
         ],
     },
@@ -50,7 +60,7 @@ RECEIPT_JSON_SCHEMA = {
 _SYSTEM_PROMPT = """You extract fields from a payment terminal transaction slip.
 Use only the OCR text. Leave a field null when it is not printed. Do not guess or calculate missing values.
 txn_amount is a JSON number. currency is a 3-letter ISO code such as AED.
-txn_date should be ISO-8601 when the slip has both a date and a time.
+txn_date and effective_data should be ISO-8601 when the slip has both a date and a time.
 card_last4 is the last four digits only. scheme is the card network.
 confidence is your overall confidence from 0 to 1.
 """

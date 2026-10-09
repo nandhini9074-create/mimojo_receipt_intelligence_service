@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS receipt_evidence (
     jira_ticket_id VARCHAR(50) NOT NULL,
     mid VARCHAR(100),
     tid VARCHAR(100),
+    city VARCHAR(20),
+    country VARCHAR(20),
     txn_amount NUMERIC(18, 2),
     currency VARCHAR(3),
     txn_date TIMESTAMPTZ,
@@ -14,6 +16,9 @@ CREATE TABLE IF NOT EXISTS receipt_evidence (
     card_last4 VARCHAR(4),
     scheme VARCHAR(30),
     outlet_address VARCHAR(250),
+    merchant_name VARCHAR(100),
+    location_id VARCHAR(50),
+    effective_data TIMESTAMPTZ,
     evidence_file_url VARCHAR(200) NOT NULL,
     extraction_confidence NUMERIC(5, 4),
     extracted_data JSONB,
@@ -23,6 +28,7 @@ CREATE TABLE IF NOT EXISTS receipt_evidence (
     reviewed_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    decline_reason VARCHAR(255),
     CONSTRAINT ck_receipt_evidence_review_status
         CHECK (review_status IN ('NEW', 'APPROVED', 'REJECTED'))
 );

@@ -28,6 +28,8 @@ class ReceiptEvidence(Base):
     jira_ticket_id: Mapped[str] = mapped_column(String(50), nullable=False)
     mid: Mapped[str | None] = mapped_column(String(100))
     tid: Mapped[str | None] = mapped_column(String(100))
+    city: Mapped[str | None] = mapped_column(String(20))
+    country: Mapped[str | None] = mapped_column(String(20))
     txn_amount: Mapped[Decimal | None] = mapped_column(Numeric(18, 2))
     currency: Mapped[str | None] = mapped_column(String(3))
     txn_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -36,6 +38,9 @@ class ReceiptEvidence(Base):
     card_last4: Mapped[str | None] = mapped_column(String(4))
     scheme: Mapped[str | None] = mapped_column(String(30))
     outlet_address: Mapped[str | None] = mapped_column(String(250))
+    merchant_name: Mapped[str | None] = mapped_column(String(100))
+    location_id: Mapped[str | None] = mapped_column(String(50))
+    effective_data: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     evidence_file_url: Mapped[str] = mapped_column(String(200), nullable=False)
     extraction_confidence: Mapped[Decimal | None] = mapped_column(Numeric(5, 4))
     extracted_data: Mapped[dict | None] = mapped_column(JSON().with_variant(JSONB(), "postgresql"))
@@ -55,3 +60,4 @@ class ReceiptEvidence(Base):
         default=lambda: datetime.now(timezone.utc),
         server_default=func.now(),
     )
+    decline_reason: Mapped[str | None] = mapped_column(String(255))
