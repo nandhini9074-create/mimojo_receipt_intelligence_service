@@ -23,19 +23,26 @@ class ReceiptProcessor:
         try:
             row = session.get(ReceiptEvidence, evidence_id)
             if row is None:
-                logger.warning("receipt evidence %s disappeared before OCR", evidence_id)
                 return
+
             try:
+                logger.info("[Step 1/3] Running OCR (Document Intelligence)...")
                 ocr_text = self._ocr.extract_text(access_url)
+
+                logger.info("[Step 2/3] Extracting fields with Azure OpenAI...")
                 raw = self._extractor.extract(ocr_text)
+
+                logger.info("[Step 3/3] Saving extracted data to database...")
                 for column, value in map_extraction(raw).items():
                     setattr(row, column, value)
                 row.extracted_data = raw
                 row.evidence_ready = True
+                logger.info("Receipt %s processed successfully", evidence_id)
             except ProcessingError as exc:
                 _mark_failed(row, exc.stage, redact_secrets(str(exc)))
             except Exception as exc:
                 _mark_failed(row, "processing", redact_secrets(str(exc)))
+
             row.updated_at = datetime.now(timezone.utc)
             session.commit()
         finally:
@@ -45,4 +52,4 @@ class ReceiptProcessor:
 def _mark_failed(row: ReceiptEvidence, stage: str, message: str) -> None:
     row.evidence_ready = False
     row.extracted_data = {"error": message, "stage": stage}
-    logger.info("receipt evidence %s failed during %s", row.id, stage)
+    logger.error("Receipt %s failed at [%s]: %s", row.id, stage, message)

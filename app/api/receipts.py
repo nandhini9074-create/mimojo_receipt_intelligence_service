@@ -1,3 +1,4 @@
+import logging
 import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
@@ -5,7 +6,9 @@ from sqlalchemy.orm import Session
 
 from app.models.receipt_evidence import REVIEW_NEW, ReceiptEvidence
 from app.schemas.receipt import CreateReceiptRequest, ReceiptAccepted, ReceiptEvidenceView
-from app.services.blob_url import BlobUrlError, access_url, storage_url
+from app.services.blob_url import BlobUrlError, access_url, redact_secrets, storage_url
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/receipts", tags=["receipts"])
 
@@ -25,10 +28,12 @@ def create_receipt(
     request: Request,
     db: Session = Depends(get_db),
 ):
+    logger.info("Received request | ticket: %s | URL: %s", body.jira_ticket_id, body.image_blob_url)
     try:
         stored = storage_url(body.image_blob_url)
         readable = access_url(body.image_blob_url, request.app.state.settings.blob_sas_token)
     except BlobUrlError as exc:
+        logger.warning("Invalid URL for ticket %s: %s", body.jira_ticket_id, exc)
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     row = ReceiptEvidence(

@@ -58,10 +58,13 @@ RECEIPT_JSON_SCHEMA = {
 }
 
 _SYSTEM_PROMPT = """You extract fields from a payment terminal transaction slip.
+Extract details ONLY for Mastercard transactions.
+If the payment card scheme/network is NOT Mastercard (e.g., Visa, American Express, JCB, etc.), do not extract transaction details: leave all fields null and set confidence to 0.
+Only populate fields when the transaction is verified as Mastercard.
 Use only the OCR text. Leave a field null when it is not printed. Do not guess or calculate missing values.
 txn_amount is a JSON number. currency is a 3-letter ISO code such as AED.
 txn_date and effective_data should be ISO-8601 when the slip has both a date and a time.
-card_last4 is the last four digits only. scheme is the card network.
+card_last4 is the last four digits only. scheme must be 'Mastercard'.
 confidence is your overall confidence from 0 to 1.
 """
 

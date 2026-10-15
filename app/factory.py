@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Request
@@ -11,6 +12,18 @@ from app.services.receipt_extractor import ReceiptExtractor
 from app.services.receipt_processor import ReceiptProcessor
 
 import app.models  # noqa: F401  (register models on Base.metadata)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+logging.getLogger("azure").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpx2").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -33,12 +46,23 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.include_router(receipts_router, prefix="/api/v1")
 
+    @app.get("/")
+    def root():
+        return {
+            "service": "mimojo-receipt-intelligence-service",
+            "status": "running",
+            "docs_url": "/docs",
+        }
+
     @app.get("/health")
+    @app.get("/api/v1/health")
+    @app.get("/api/v1/health/")
     def health(request: Request):
         session = request.app.state.session_factory()
         try:
             session.execute(text("SELECT 1"))
         except Exception as exc:
+            logger.error("Health check failed: database unavailable (%s)", exc)
             raise HTTPException(status_code=503, detail="database unavailable") from exc
         finally:
             session.close()

@@ -1,3 +1,6 @@
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
 from azure.ai.documentintelligence import DocumentIntelligenceClient
 from azure.ai.documentintelligence.models import AnalyzeDocumentRequest
 from azure.core.credentials import AzureKeyCredential
@@ -5,6 +8,37 @@ from azure.core.credentials import AzureKeyCredential
 from app.config import Settings
 from app.services.blob_url import redact_secrets
 from app.services.errors import ProcessingError
+
+_DOWNLOAD_TIMEOUT_SECONDS = 60
+
+
+def download_document(url: str) -> bytes:
+    """Download the receipt here. A rejected signature falls back to the same link without the query string."""
+    payload = _read(url)
+    if payload is None and "?" in url:
+        payload = _read(url.split("?", 1)[0])
+    if payload is None:
+        raise ProcessingError(
+            "ocr",
+            "Could not download the receipt: storage rejected the request signature",
+        )
+    return payload
+
+
+def _read(url: str) -> bytes | None:
+    request = Request(url, method="GET")
+    try:
+        with urlopen(request, timeout=_DOWNLOAD_TIMEOUT_SECONDS) as response:
+            payload = response.read()
+    except HTTPError as exc:
+        if exc.code == 403:
+            return None
+        raise ProcessingError("ocr", redact_secrets(f"Could not download the receipt: {exc}")) from exc
+    except (URLError, TimeoutError) as exc:
+        raise ProcessingError("ocr", redact_secrets(f"Could not download the receipt: {exc}")) from exc
+    if not payload:
+        raise ProcessingError("ocr", "Receipt file is empty")
+    return payload
 
 
 class DocumentIntelligenceOcr:
@@ -18,11 +52,12 @@ class DocumentIntelligenceOcr:
             raise ProcessingError("ocr", "Document Intelligence is not configured")
 
         try:
+            document = download_document(url)
             client = DocumentIntelligenceClient(
                 endpoint=self._settings.document_intelligence_endpoint,
                 credential=AzureKeyCredential(self._settings.document_intelligence_key),
             )
-            poller = client.begin_analyze_document("prebuilt-read", AnalyzeDocumentRequest(url_source=url))
+            poller = client.begin_analyze_document("prebuilt-read", AnalyzeDocumentRequest(bytes_source=document))
             result = poller.result()
         except ProcessingError:
             raise
